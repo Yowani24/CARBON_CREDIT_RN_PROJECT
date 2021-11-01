@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
+import React, {  useContext, useState } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather'
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
@@ -8,14 +8,49 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 
 import ModalPopup from '../modal_popup/ModalPopup';
 
-
 const bgIma = require('./moonIma.jpg');
-
+import { ProductList } from '../../product';
 
 import { ImageBackground, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Pagamento({ navigation }){
+    const { product, onAdd, onRemove, quantidade } = useContext(ProductList);
     const [visible, setVisible] = useState(false);
+    const [products,setProducts] = product;
+    const valorTotal = parseFloat(products.price) * quantidade;
+    //10.128.0.42
+
+    const [paymentMethod, setPaymentMethod] = useState('');
+
+    const Prosseguir = () => {
+        fetch("http://10.128.0.42:4000/payment", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({
+                items: product.map(item => {
+                    return{
+                        id: item.id,
+                        product: item.product,
+                        name: item.name,
+                        price: item.price,
+                        image: item.image,
+                        description: item.description,
+                        quantidade: quantidade,
+                        paymentMethod:paymentMethod
+                    }
+                })
+            })
+        }).then(res => {
+            if(res.ok) return res.json()
+            return res.json().then(json => Promise.reject(json))
+        }).then(({ url }) => {
+            window.location = url
+        }).catch(e => {
+            console.error(e.error)
+        })
+    }
 
     return(
 
@@ -24,7 +59,7 @@ export default function Pagamento({ navigation }){
 
                     <ModalPopup visible={visible}>
                         <View style={{width:'100%'}}>
-                            <TouchableOpacity style={styles.modal_button} onPress={() => navigation.navigate('Telainicial')}>
+                            <TouchableOpacity style={styles.modal_button} onPress={Prosseguir}>
                                 <Text style={styles.modal_button_text}>FINALIZAR COMPRA</Text>
                             </TouchableOpacity>
 
@@ -54,7 +89,7 @@ export default function Pagamento({ navigation }){
                                     </View>
                                     <View>
                                         <Text style={styles.saldo_text1}>Comprar créditos</Text>
-                                        <Text style={styles.saldo_text2}>Valor atual de mercado: R$ 103,40</Text>
+                                        <Text style={styles.saldo_text2}>Valor atual de mercado: R$ {products.price} </Text>
                                     </View>
                                 </View>
                             </View>
@@ -66,7 +101,7 @@ export default function Pagamento({ navigation }){
                             <View style={{paddingHorizontal:20}}>
                                 <Text style={styles.title}>Resumo do pedido</Text>
                                 <Text  style={styles.bottom_side_text1}>Você está comprando:</Text>
-                                <Text style={styles.bottom_side_text2}>1 crédito de carbono</Text>
+                                <Text style={styles.bottom_side_text2}>{quantidade} crédito de carbono</Text>
                                 <View style={{borderBottomColor:'lightgray', borderBottomWidth:.5, paddingBottom:20}}>
                                     <TouchableOpacity onPress={() => navigation.navigate('Comprar')}>
                                         <Text style={styles.bottom_side_text3}>Editar quantidade <Feather name="edit-3" size={20} color="#d3d3d3"/></Text>
@@ -78,7 +113,7 @@ export default function Pagamento({ navigation }){
                                 <View  style={{paddingHorizontal:20}}>
                                     <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginTop:20}}>
                                         <Text style={styles.valor_total_text}>Valor total:</Text>
-                                        <Text style={styles.valor_total_value}>R$103,40</Text>
+                                        <Text style={styles.valor_total_value}>R$ {valorTotal.toFixed(2)}</Text>
                                     </View>
 
                                     <Text style={styles.forma_de_pagamento_text}>Formas de pagamento</Text>
@@ -90,28 +125,28 @@ export default function Pagamento({ navigation }){
                                     <ScrollView
                                         horizontal={true}
                                         showsHorizontalScrollIndicator={false}>
-                                        <TouchableOpacity style={styles.project_card}>
+                                        <TouchableOpacity style={styles.project_card} disabled={true}>
                                             <FontAwesome name="bank" size={30} color="gray"/>
                                             <View style={{flex:1}}>
                                                 <Text style={styles.project_title}>TED</Text>
                                             </View>
                                         </TouchableOpacity>
 
-                                        <TouchableOpacity style={styles.project_card}>
+                                        <TouchableOpacity style={styles.project_card} disabled={true}>
                                             <MaterialIcons name="api" size={30} color="gray"/>
                                             <View style={{flex:1}}>
                                                 <Text style={styles.project_title}>PIX</Text>
                                             </View>
                                         </TouchableOpacity>
 
-                                        <TouchableOpacity style={styles.project_card}>
+                                        <TouchableOpacity style={styles.project_card} onPress={() => setPaymentMethod('boleto')}>
                                             <MaterialCommunityIcons name="credit-card-scan-outline" size={30} color="gray"/>
                                             <View style={{flex:1}}>
                                                 <Text style={styles.project_title}>Boleto</Text>
                                             </View>
                                         </TouchableOpacity>
 
-                                        <TouchableOpacity style={styles.project_card}>
+                                        <TouchableOpacity style={styles.project_card} onPress={() => setPaymentMethod('card')}>
                                             <Feather name="credit-card" size={30} color="gray"/>
                                             <View style={{flex:1}}>
                                                 <Text style={styles.project_title}>Crédito</Text>
@@ -120,7 +155,8 @@ export default function Pagamento({ navigation }){
                                     </ScrollView>
                                 </View>
 
-                                <TouchableOpacity style={styles.prosseguir_button} onPress={() => setVisible(true)}>
+                                <TouchableOpacity style={styles.prosseguir_button} onPress={Prosseguir}>
+                                {/* onPress={() => setVisible(true)} */}
                                     <Text style={styles.prosseguir_button_text}>PROSSEGUIR</Text>
                                 </TouchableOpacity>
                             </View>

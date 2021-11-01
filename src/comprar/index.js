@@ -1,15 +1,29 @@
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather'
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons'
 
 const bgIma = require('./moonIma.jpg');
 
+import { ProductList } from '../../product';
 
 import { ImageBackground, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export default function Comprar({ navigation }){
+export default function Comprar({ navigation }, props){
+    const { product, onAdd, onRemove, quantidade } = useContext(ProductList);
+    // const [qty, setQty] = quantidade
+    const [disabled, setDisabled] = useState(true);
+    const [products,setProducts] = product;
+
+   useEffect(() => {
+        if(quantidade <= 0){
+            setDisabled(true)
+        }else{
+            setDisabled(false);
+        }
+   });
+
     return(
         <SafeAreaView>
             <ImageBackground style={{width: '100%', height: '100%'}} source={bgIma}>
@@ -34,7 +48,7 @@ export default function Comprar({ navigation }){
                                     </View>
                                     <View>
                                         <Text style={styles.saldo_text1}>Comprar créditos</Text>
-                                        <Text style={styles.saldo_text2}>Valor atual de mercado: R$ 103,40</Text>
+                                        <Text style={styles.saldo_text2}>Valor atual de mercado: R$ {products.price}</Text>
                                     </View>
                                 </View>
                                 <TouchableOpacity onPress={() => navigation.navigate('Movimentos')}>
@@ -50,14 +64,18 @@ export default function Comprar({ navigation }){
                             <View style={styles.card_texts_box}>
                                 <Text style={styles.card_text}>Selecione quantidade</Text>
                             </View>
-                            <View style={styles.card_btn}>
-                                <TouchableOpacity style={styles.card_minus_btn}>
+                            <View style={styles.card_btn_box}>
+
+                                <TouchableOpacity style={styles.card_btn} disabled={ disabled } onPress={onRemove}>
                                     <Feather name="minus" size={18} color="#FFFFFF"/>
                                 </TouchableOpacity>
-                                <Text style={styles.quantity}>0</Text>
-                                <TouchableOpacity style={styles.card_plus_btn}>
+
+                                <Text style={styles.quantity}>{quantidade}</Text>
+
+                                <TouchableOpacity style={styles.card_btn} onPress={onAdd}>
                                     <Feather name="plus" size={18} color="#FFFFFF"/>
                                 </TouchableOpacity>
+
                             </View>
                         </View>
  
@@ -215,18 +233,18 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight:'bold'
     },
-    card_btn:{
+    card_btn_box:{
         flexDirection:'row'
     },
-    card_minus_btn:{
-        backgroundColor:'#dddddd',
-        width: 20,
-        height:20,
-        justifyContent:'center',
-        alignItems:'center',
-        borderRadius:100
-    },
-    card_plus_btn:{
+    // card_btn_gray_background:{
+    //     backgroundColor:'red',
+    //     width: 20,
+    //     height:20,
+    //     justifyContent:'center',
+    //     alignItems:'center',
+    //     borderRadius:100,
+    // },
+    card_btn:{
         backgroundColor:'rgb(140,198,62)',
         width: 20,
         height:20,
